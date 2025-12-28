@@ -2,11 +2,15 @@
 session_start();
 require 'includes/db_connect.php';
 require 'includes/scada_db.php';
+require 'includes/ldap_connect.php';
+require 'includes/check_role.php';
 
 if (!isset($_SESSION['user_dn'])) {
     header("Location: index.php");
     exit;
 }
+
+$is_admin = is_admin();
 
 // Get live SCADA data
 $scada = get_scada();
@@ -98,7 +102,10 @@ if (isset($_GET['log_id'])) {
     </div>
     <div class="user-info">
         User: <strong><?php echo $_SESSION['user_name'] ?? 'Unknown'; ?></strong>
-        <a href="controls.php" class="btn-control">⚙ CONTROLS</a>
+        <?php if($is_admin): ?>
+            <a href="controls.php" class="btn-control">⚙ CONTROLS</a>
+            <a href="users.php" class="btn-control" style="background: #5865f2;">👥 USERS</a>
+        <?php endif; ?>
         <a href="logout.php" class="logout">LOGOUT</a>
     </div>
 </div>

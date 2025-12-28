@@ -2,15 +2,20 @@
 session_start();
 require 'includes/scada_db.php';
 require 'includes/functions.php';
+require 'includes/ldap_connect.php';
+require 'includes/check_role.php';
 
 if (!isset($_SESSION['user_dn'])) {
     header("Location: index.php");
     exit;
 }
 
-$message = "";
+// Only admin can access controls
+if (!is_admin()) {
+    die("<h1>Access Denied</h1><p>Only administrators can access SCADA controls.</p><a href='dashboard.php'>Back to Dashboard</a>");
+}
 
-// VULNERABILITY: No permission check - any logged user can control!
+$message = "";
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $action = $_POST['action'];
 

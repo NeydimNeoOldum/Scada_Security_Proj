@@ -6,9 +6,7 @@ require 'includes/functions.php';
 
 $error = "";
 
-// ---------------------------------------------------------
-// AUTHENTICATION LOGIC (SAME AS BEFORE)
-// ---------------------------------------------------------
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_input = $_POST['username'];
     $pass_input = $_POST['password'];
@@ -16,31 +14,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     log_event("LOGIN_ATTEMPT", "Attempt for User: " . $user_input);
 
     // VULNERABILITY #1: LDAP INJECTION
-    $filter = "(uid=" . $user_input . ")"; 
-    $search = ldap_search($ldap_conn, "dc=scada,dc=local", $filter);
-    $info = ldap_get_entries($ldap_conn, $search);
+    $filter = "(uid=" . $user_input . ")";
+    $search = @ldap_search($ldap_conn, "dc=scada,dc=local", $filter);
 
-    if ($info["count"] > 0) {
-        $user_dn = $info[0]["dn"];
-        $user_cn = $info[0]["cn"][0];
-
-        // VULNERABILITY #2: NO RATE LIMITING
-        $bind = @ldap_bind($ldap_conn, $user_dn, $pass_input);
-
-        if ($bind) {
-            $_SESSION['user_dn'] = $user_dn;
-            $_SESSION['user_name'] = $user_cn;
-            
-            log_event("LOGIN_SUCCESS", "User logged in: " . $user_cn);
-            header("Location: dashboard.php");
-            exit;
-        } else {
-            $error = "Authentication Failed";
-            log_event("LOGIN_FAIL", "Wrong password for: " . $user_input);
-        }
+    if ($search === false) {
+        $error = "Invalid search";
+        log_event("LOGIN_FAIL", "LDAP injection attempt: " . $user_input);
     } else {
-        $error = "User Unknown";
-        log_event("LOGIN_FAIL", "User does not exist: " . $user_input);
+        $info = ldap_get_entries($ldap_conn, $search);
+
+        if ($info["count"] > 0) {
+            $user_dn = $info[0]["dn"];
+            $user_cn = $info[0]["cn"][0];
+
+            // VULNERABILITY #2: NO RATE LIMITING
+            $bind = @ldap_bind($ldap_conn, $user_dn, $pass_input);
+
+            if ($bind) {
+                $_SESSION['user_dn'] = $user_dn;
+                $_SESSION['user_name'] = $user_cn;
+
+                log_event("LOGIN_SUCCESS", "User logged in: " . $user_cn);
+                header("Location: dashboard.php");
+                exit;
+            } else {
+                $error = "Authentication Failed";
+                log_event("LOGIN_FAIL", "Wrong password for: " . $user_input);
+            }
+        } else {
+            $error = "User Unknown";
+            log_event("LOGIN_FAIL", "User does not exist: " . $user_input);
+        }
     }
 }
 ?>
