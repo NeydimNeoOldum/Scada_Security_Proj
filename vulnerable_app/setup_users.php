@@ -31,7 +31,6 @@ for ($i = 1; $i <= 100; $i++) {
     ];
 
     // 4. Add to Server (We suppress errors with @ for demo smoothness)
-    // Note: In a real app, you'd handle errors properly.
     $add = @ldap_add($ldap_conn, $dn, $info);
 
     if ($add) {
