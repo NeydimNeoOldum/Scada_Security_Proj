@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  # The LDAP Server (Vulnerable Backend)
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: scada_ldap
+    environment:
+      LDAP_ORGANISATION: "ScadaWaterCorp"
+      LDAP_DOMAIN: "scada.local"
+      LDAP_ADMIN_PASSWORD: "admin"
+      LDAP_TLS: "false" 
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+
+  # The GUI to see your LDAP users
+  phpldapadmin:
+    image: osixia/phpldapadmin:latest
+    container_name: scada_ldap_gui
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "openldap"
+      PHPLDAPADMIN_HTTPS: "false"
+    ports:
+      - "8080:80"
+    depends_on:
+      - openldap
+
+  # PHP Web Application (Vulnerable SCADA)
+  web:
+    image: php:8.1-apache
+    container_name: scada_web
+    ports:
+      - "80:80"
+    volumes:
+      - ./vulnerable_app:/var/www/html
+    depends_on:
+      - openldap
+    command: >
+      bash -c "apt-get update &&
+               apt-get install -y libldap2-dev libsqlite3-dev &&
+               docker-php-ext-install pdo pdo_sqlite &&
+               docker-php-ext-configure ldap &&
+               docker-php-ext-install ldap &&
+               chmod +x /var/www/html/start_simulation.sh &&
+               /var/www/html/start_simulation.sh &&
+               apache2-foreground"
+
+volumes:
+  ldap_data:
+  ldap_config:
