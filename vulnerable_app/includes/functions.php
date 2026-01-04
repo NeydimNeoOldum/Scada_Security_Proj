@@ -4,9 +4,9 @@ require 'db_connect.php';
 
 function log_event($type, $details) {
     global $db;
-    
+
     try {
-        $ip = $_SERVER['REMOTE_ADDR'];
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
         
         // We use a prepared statement here ONLY for the logger 
         // because we don't want the logging system itself to crash easily.

@@ -2,7 +2,7 @@
 // ldap_connect.php - PHP 8.3 Compatible
 
 // Connection Settings
-$ldap_host = "ldap://localhost:389"; // UPDATED: Host and Port combined in one string
+$ldap_host = "ldap://openldap:389"; // Docker container name
 $ldap_dn = "cn=admin,dc=scada,dc=local"; // Admin User
 $ldap_password = "admin"; // Admin Password
 

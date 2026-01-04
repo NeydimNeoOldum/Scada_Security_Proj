@@ -57,6 +57,7 @@ if (isset($_GET['log_id'])) {
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="30">
     <title>SCADA Dashboard</title>
     <style>
         :root {
@@ -98,7 +99,7 @@ if (isset($_GET['log_id'])) {
 <div class="header">
     <div>
         <h1 style="margin:0">MUNICIPAL WATER CONTROL</h1>
-        <small>Node: SCADA-04 | Reservoir A</small>
+        <small>Node: SCADA-04 | Reservoir A | Last Update: <?php echo date('Y-m-d H:i:s'); ?> | Auto-refresh: 30s</small>
     </div>
     <div class="user-info">
         User: <strong><?php echo $_SESSION['user_name'] ?? 'Unknown'; ?></strong>
