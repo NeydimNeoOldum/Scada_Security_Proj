@@ -3,7 +3,7 @@
 session_start();
 require 'includes/ldap_connect.php';
 require 'includes/functions.php';
-
+require 'includes/defense.php';
 $error = "";
 
 
@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($search === false) {
         $error = "Invalid search";
-        log_event("LOGIN_FAIL", "LDAP injection attempt: " . $user_input);
+        log_event("HIGH_LDAP_INJECTION", "Syntax Error in Search. Payload: '$user_input'. [ACTION: Investigate User Input] [REVERSAL: N/A]");
     } else {
         $info = ldap_get_entries($ldap_conn, $search);
 

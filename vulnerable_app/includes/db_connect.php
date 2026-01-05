@@ -17,6 +17,15 @@ try {
     )";
     $db->exec($query);
 
+
+    $query_blacklist = "CREATE TABLE IF NOT EXISTS blacklist (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ip_address TEXT UNIQUE,
+        banned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        reason TEXT
+    )";
+    $db->exec($query_blacklist);
+
 } catch(PDOException $e) {
     die("Database Connection Failed: " . $e->getMessage());
 }

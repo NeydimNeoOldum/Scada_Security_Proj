@@ -4,7 +4,7 @@ require 'includes/db_connect.php';
 require 'includes/scada_db.php';
 require 'includes/ldap_connect.php';
 require 'includes/check_role.php';
-
+require 'includes/defense.php';
 if (!isset($_SESSION['user_dn'])) {
     header("Location: index.php");
     exit;
@@ -34,7 +34,7 @@ if (isset($_GET['log_id'])) {
         if (strpos($input, $word) !== false) {
             $detected = true;
             $filter_error = "SECURITY ALERT: Malicious keyword '$word' detected!";
-            log_event("SECURITY_ALERT", "SQL Injection blocked. Keyword: '$word' in input: '$input'");
+            log_event("CRITICAL_SQL_INJECTION", "Blocked Keyword: '$word'. Input Payload: '$input'. [ACTION: Block IP via Firewall] [REVERSAL: Unblock in FW]");
             break;
         }
     }
