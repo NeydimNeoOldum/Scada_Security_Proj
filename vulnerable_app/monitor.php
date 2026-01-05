@@ -42,6 +42,9 @@ $logs = $db->query($query)->fetchAll(PDO::FETCH_ASSOC);
         .type-LOGIN_FAIL { color: var(--danger); }
         .type-LOGIN_ATTEMPT { color: var(--info); }
         .type-SECURITY_ALERT { background-color: rgba(224, 79, 95, 0.2); color: var(--danger); font-weight: bold; }
+        .type-ACCESS_DENIED { color: #ffcc00; font-weight: bold; } /* Orange for unauthorized access */
+        .type-USER_AUDIT { color: #d67dfc; } /* Purple for admin actions */
+        .type-DIRECTORY_SEARCH { color: #aaaaaa; font-style: italic; } /* Grey for searches */
     </style>
 </head>
 <body>

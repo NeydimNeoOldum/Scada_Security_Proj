@@ -23,6 +23,7 @@ if (isset($_GET['delete'])) {
 
     if (@ldap_delete($ldap_conn, $dn)) {
         $message = "User '$uid' deleted successfully!";
+        log_event("USER_AUDIT", "Admin deleted user: $uid");
     } else {
         $error = "Failed to delete user: " . ldap_error($ldap_conn);
     }
@@ -49,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_user'])) {
 
     if (@ldap_add($ldap_conn, $dn, $entry)) {
         $message = "User '$uid' created successfully!";
+        log_event("USER_AUDIT", "Admin created new user: $uid (Role: $role)");
     } else {
         $error = "Failed to create user: " . ldap_error($ldap_conn);
     }

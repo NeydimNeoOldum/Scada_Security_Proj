@@ -26,7 +26,8 @@ if (isset($_GET['query'])) {
     $filter = "(&(uid=" . $safe_input . ")(objectClass=inetOrgPerson))";
     
     $debug_filter = $filter; // Showing this on screen helps you explain it in the video!
-
+    
+    log_event("DIRECTORY_SEARCH", "User searched for: " . htmlspecialchars($raw_input));
     // Execute Search
     $search = @ldap_search($ldap_conn, "dc=scada,dc=local", $filter);
     

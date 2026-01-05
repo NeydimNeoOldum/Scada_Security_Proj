@@ -34,6 +34,7 @@ if (isset($_GET['log_id'])) {
         if (strpos($input, $word) !== false) {
             $detected = true;
             $filter_error = "SECURITY ALERT: Malicious keyword '$word' detected!";
+            log_event("SECURITY_ALERT", "SQL Injection blocked. Keyword: '$word' in input: '$input'");
             break;
         }
     }

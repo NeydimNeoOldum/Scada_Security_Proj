@@ -12,6 +12,7 @@ if (!isset($_SESSION['user_dn'])) {
 
 // Only admin can access controls
 if (!is_admin()) {
+    log_event("ACCESS_DENIED", "Unauthorized access attempt to Controls by user: " . ($_SESSION['user_name'] ?? 'Unknown'));
     die("<h1>Access Denied</h1><p>Only administrators can access SCADA controls.</p><a href='dashboard.php'>Back to Dashboard</a>");
 }
 
