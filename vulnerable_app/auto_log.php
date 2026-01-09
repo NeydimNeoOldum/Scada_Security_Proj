@@ -1,5 +1,6 @@
 <?php
-// Simple auto logger - run this manually or via cron
+// Simple auto logger
+require 'includes/db_connect.php'; // Database connection for logging
 require 'includes/scada_db.php';
 require 'includes/functions.php';
 

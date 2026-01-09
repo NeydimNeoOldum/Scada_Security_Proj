@@ -5,6 +5,7 @@
  * Runs continuously in background, updating water levels every 5 minutes
  */
 
+require __DIR__ . '/includes/db_connect.php'; // Database connection for logging
 require __DIR__ . '/includes/scada_db.php';
 require __DIR__ . '/includes/functions.php';
 

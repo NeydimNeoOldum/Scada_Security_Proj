@@ -1,8 +1,10 @@
 <?php
 session_start();
 require 'includes/tab_session.php'; // Multi-tab session support
+require 'includes/db_connect.php'; // Database connection for logging
 require 'includes/ldap_connect.php';
 require 'includes/check_role.php';
+require 'includes/functions.php'; // Logging functions
 
 if (!is_tab_logged_in()) {
     header("Location: " . add_tab_id("index.php"));

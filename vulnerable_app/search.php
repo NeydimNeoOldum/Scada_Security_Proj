@@ -1,6 +1,7 @@
 <?php
 session_start();
 require 'includes/tab_session.php'; // Multi-tab session support
+require 'includes/db_connect.php'; // Database connection for logging
 require 'includes/ldap_connect.php';
 require 'includes/functions.php';
 
@@ -17,7 +18,7 @@ if (isset($_GET['query'])) {
 
     // VULNERABILITY: Only removes *, doesn't escape parentheses
     $safe_input = str_replace("*", "", $raw_input);
-
+    
     // Add wildcards for partial name matching
     $search_term = "*" . $safe_input . "*";
 

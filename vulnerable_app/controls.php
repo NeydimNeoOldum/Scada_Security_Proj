@@ -1,6 +1,7 @@
 <?php
 session_start();
 require 'includes/tab_session.php'; // Multi-tab session support
+require 'includes/db_connect.php'; // Database connection for logging
 require 'includes/scada_db.php';
 require 'includes/functions.php';
 require 'includes/ldap_connect.php';

@@ -2,24 +2,6 @@
 // Setup script - Delete all users and create one admin
 require 'includes/ldap_connect.php';
 
-// // Get all existing users
-// $search = @ldap_search($ldap_conn, "dc=scada,dc=local", "(uid=*)");
-// $deleted = 0;
-
-// if ($search) {
-//     $entries = ldap_get_entries($ldap_conn, $search);
-//     echo "Found " . $entries['count'] . " existing users.\n";
-
-//     for ($i = 0; $i < $entries['count']; $i++) {
-//         $dn = $entries[$i]['dn'];
-//         if (@ldap_delete($ldap_conn, $dn)) {
-//             echo "[DELETED] " . $entries[$i]['uid'][0] . "\n";
-//             $deleted++;
-//         }
-//     }
-// }
-
-echo "\nDeleted $deleted users.\n\n";
 
 // Create single admin user
 $admin_uid = "admin";

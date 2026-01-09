@@ -2,7 +2,6 @@
 session_start();
 require 'includes/tab_session.php'; // Multi-tab session support
 require 'includes/db_connect.php';
-// [FIX 1] Include these files so is_admin() and log_event() work
 require 'includes/check_role.php';
 require 'includes/functions.php'; 
 

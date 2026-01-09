@@ -2,6 +2,7 @@
 // START SESSION
 session_start();
 require 'includes/tab_session.php'; // Multi-tab session support
+require 'includes/db_connect.php'; // Database connection for logging
 require 'includes/ldap_connect.php';
 require 'includes/functions.php';
 require 'includes/defense.php';

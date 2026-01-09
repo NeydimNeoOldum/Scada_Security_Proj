@@ -30,7 +30,7 @@ for ($i = 1; $i <= 100; $i++) {
         "objectClass" => ["inetOrgPerson", "top"]
     ];
 
-    // 4. Add to Server (We suppress errors with @ for demo smoothness)
+    // 4. Add to Server 
     $add = @ldap_add($ldap_conn, $dn, $info);
 
     if ($add) {
