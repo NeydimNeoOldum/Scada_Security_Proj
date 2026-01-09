@@ -1,12 +1,13 @@
 <?php
 session_start();
+require 'includes/tab_session.php';
 require 'includes/db_connect.php';
 require 'includes/scada_db.php';
 require 'includes/ldap_connect.php';
 require 'includes/check_role.php';
 
-if (!isset($_SESSION['user_dn'])) {
-    header("Location: index.php");
+if (!is_tab_logged_in()) {
+    header("Location: " . add_tab_id("index.php"));
     exit;
 }
 
@@ -98,10 +99,13 @@ if (isset($_GET['log_id'])) {
         <small>Node: SCADA-04 | Reservoir A</small>
     </div>
     <div class="user-info">
-        User: <strong><?php echo $_SESSION['user_name'] ?? 'Unknown'; ?></strong>
+        User: <strong><?php echo get_tab_user_name(); ?></strong>
+        <a href="<?php echo add_tab_id('search.php'); ?>" class="btn-control" style="background: #43b581;">SEARCH</a>
         <?php if($is_admin): ?>
-            <a href="controls.php" class="btn-control">⚙ CONTROLS</a>
-            <a href="users.php" class="btn-control" style="background: #5865f2;">👥 USERS</a>
+            <a href="<?php echo add_tab_id('security_monitor.php'); ?>" class="btn-control" style="background: #e6b450;">🛡 SECURITY</a>
+            <a href="<?php echo add_tab_id('security_settings.php'); ?>" class="btn-control" style="background: #faa61a;">⚙ SETTINGS</a>
+            <a href="<?php echo add_tab_id('controls.php'); ?>" class="btn-control">⚙ CONTROLS</a>
+            <a href="<?php echo add_tab_id('users.php'); ?>" class="btn-control" style="background: #5865f2;">👥 USERS</a>
         <?php endif; ?>
         <a href="logout.php" class="logout">LOGOUT</a>
     </div>
@@ -148,6 +152,7 @@ if (isset($_GET['log_id'])) {
     <p style="color: var(--text-muted); font-size: 13px;">Use ID to filter events.</p>
 
     <form method="GET" class="search-bar">
+        <input type="hidden" name="tab_id" value="<?php echo htmlspecialchars($tab_id); ?>">
         <input type="text" name="log_id" placeholder="Enter Log ID..." autocomplete="off">
         <button type="submit">FILTER</button>
     </form>

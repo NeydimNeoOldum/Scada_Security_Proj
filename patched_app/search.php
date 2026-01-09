@@ -1,10 +1,11 @@
 <?php
 session_start();
+require 'includes/tab_session.php';
 require 'includes/ldap_connect.php';
 require 'includes/functions.php';
 
-if (!isset($_SESSION['user_dn'])) {
-    header("Location: index.php");
+if (!is_tab_logged_in()) {
+    header("Location: " . add_tab_id("index.php"));
     exit;
 }
 
@@ -73,6 +74,7 @@ if (isset($_GET['query'])) {
     <br><br>
 
     <form method="GET" class="search-box">
+        <input type="hidden" name="tab_id" value="<?php echo htmlspecialchars($tab_id); ?>">
         <input type="text" name="query" placeholder="Search by Username (e.g. james.smith1)..." autocomplete="off">
         <button type="submit">SEARCH</button>
     </form>

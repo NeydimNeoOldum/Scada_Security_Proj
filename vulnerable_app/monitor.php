@@ -1,5 +1,6 @@
 <?php
 session_start();
+require 'includes/tab_session.php'; // Multi-tab session support
 require 'includes/db_connect.php';
 // [FIX 1] Include these files so is_admin() and log_event() work
 require 'includes/check_role.php';
@@ -16,17 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['block_ip'])) {
         $stmt->execute([$ip_to_ban, $reason]);
         
         log_event("ADMIN_ACTION", "Manually blocked IP: $ip_to_ban. [ACTION: Enforce Ban] [REVERSAL: Remove from Blacklist]");
-        
+
         // Optional: Redirect to avoid re-submitting on refresh
-        header("Location: monitor.php");
+        header("Location: " . add_tab_id("monitor.php"));
         exit;
     } catch (Exception $e) {
         $error = "Database Error: " . $e->getMessage();
     }
 }
 
-if (!isset($_SESSION['user_dn'])) {
-    header("Location: index.php");
+if (!is_tab_logged_in()) {
+    header("Location: " . add_tab_id("index.php"));
     exit;
 }
 // Only admin can see the security monitor

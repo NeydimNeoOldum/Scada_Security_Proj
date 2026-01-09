@@ -1,10 +1,11 @@
 <?php
 session_start();
+require 'includes/tab_session.php'; // Multi-tab session support
 require 'includes/ldap_connect.php';
 require 'includes/functions.php';
 
-if (!isset($_SESSION['user_dn'])) {
-    header("Location: index.php");
+if (!is_tab_logged_in()) {
+    header("Location: " . add_tab_id("index.php"));
     exit;
 }
 
@@ -13,21 +14,19 @@ $debug_filter = "";
 
 if (isset($_GET['query'])) {
     $raw_input = $_GET['query'];
-    
-    // ---------------------------------------------------------
-    // VULNERABILITY #2: PARTIAL ESCAPING (THE FAILED PATCH)
-    // ---------------------------------------------------------
-    // The developer thinks: "Hackers use * to see everyone. I will remove it!"
-    // FLAW: They do not escape parentheses '(', ')', or backslashes '\'.
+
+    // VULNERABILITY: Only removes *, doesn't escape parentheses
     $safe_input = str_replace("*", "", $raw_input);
-    
-    // The developer intends to ONLY search by UID:
-    // Filter structure: (&(uid=INPUT)(objectClass=inetOrgPerson))
-    $filter = "(&(uid=" . $safe_input . ")(objectClass=inetOrgPerson))";
-    
-    $debug_filter = $filter; // Showing this on screen helps you explain it in the video!
-    
-    log_event("DIRECTORY_SEARCH", "User searched for: " . htmlspecialchars($raw_input));
+
+    // Add wildcards for partial name matching
+    $search_term = "*" . $safe_input . "*";
+
+    // Search by CN (Common Name)
+    $filter = "(&(cn=" . $search_term . ")(objectClass=inetOrgPerson))";
+
+    $debug_filter = $filter;
+
+    log_event("DIRECTORY_SEARCH", "User searched for: " . htmlspecialchars($raw_input), $raw_input);
     // Execute Search
     $search = @ldap_search($ldap_conn, "dc=scada,dc=local", $filter);
     
@@ -71,6 +70,7 @@ if (isset($_GET['query'])) {
     <br><br>
 
     <form method="GET" class="search-box">
+        <input type="hidden" name="tab_id" value="<?php echo htmlspecialchars($tab_id); ?>">
         <input type="text" name="query" placeholder="Search by Username (e.g. james.smith1)..." autocomplete="off">
         <button type="submit">SEARCH</button>
     </form>

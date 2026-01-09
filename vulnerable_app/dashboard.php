@@ -1,12 +1,16 @@
 <?php
 session_start();
+require 'includes/tab_session.php'; // Multi-tab session support
 require 'includes/db_connect.php';
 require 'includes/scada_db.php';
 require 'includes/ldap_connect.php';
 require 'includes/check_role.php';
 require 'includes/defense.php';
-if (!isset($_SESSION['user_dn'])) {
-    header("Location: index.php");
+require 'includes/functions.php';
+
+// Check tab-specific authentication
+if (!is_tab_logged_in()) {
+    header("Location: " . add_tab_id("index.php"));
     exit;
 }
 
@@ -31,10 +35,10 @@ if (isset($_GET['log_id'])) {
     $input = $_GET['log_id'];
     $detected = false;
     foreach ($blacklist as $word) {
-        if (strpos($input, $word) !== false) {
+        if (stripos($input, $word) !== false) {
             $detected = true;
             $filter_error = "SECURITY ALERT: Malicious keyword '$word' detected!";
-            log_event("CRITICAL_SQL_INJECTION", "Blocked Keyword: '$word'. Input Payload: '$input'. [ACTION: Block IP via Firewall] [REVERSAL: Unblock in FW]");
+            log_event("CRITICAL_SQL_INJECTION", "Blocked Keyword: '$word'. Input Payload: '$input'. [ACTION: Block IP via Firewall] [REVERSAL: Unblock in FW]", $input);
             break;
         }
     }
@@ -60,6 +64,7 @@ if (isset($_GET['log_id'])) {
     <meta charset="UTF-8">
     <meta http-equiv="refresh" content="30">
     <title>SCADA Dashboard</title>
+    <script src="includes/tab_session.js"></script>
     <style>
         :root {
             --bg-color: #1e2124;
@@ -103,9 +108,11 @@ if (isset($_GET['log_id'])) {
         <small>Node: SCADA-04 | Reservoir A | Last Update: <?php echo date('Y-m-d H:i:s'); ?> | Auto-refresh: 30s</small>
     </div>
     <div class="user-info">
-        User: <strong><?php echo $_SESSION['user_name'] ?? 'Unknown'; ?></strong>
+        User: <strong><?php echo get_tab_user_name(); ?></strong>
+        <a href="<?php echo add_tab_id('search.php'); ?>" class="btn-control" style="background: #43b581;"> SEARCH</a>
         <?php if($is_admin): ?>
-            <a href="controls.php" class="btn-control">⚙ CONTROLS</a>
+            <a href="<?php echo add_tab_id('security_monitor.php'); ?>" class="btn-control" style="background: #e6b450;">SECURITY</a>
+            <a href="<?php echo add_tab_id('controls.php'); ?>" class="btn-control">⚙ CONTROLS</a>
             <a href="users.php" class="btn-control" style="background: #5865f2;">👥 USERS</a>
         <?php endif; ?>
         <a href="logout.php" class="logout">LOGOUT</a>
@@ -153,6 +160,7 @@ if (isset($_GET['log_id'])) {
     <p style="color: var(--text-muted); font-size: 13px;">Use ID to filter events.</p>
 
     <form method="GET" class="search-bar">
+        <input type="hidden" name="tab_id" value="<?php echo htmlspecialchars($tab_id); ?>">
         <input type="text" name="log_id" placeholder="Enter Log ID..." autocomplete="off">
         <button type="submit">FILTER</button>
     </form>

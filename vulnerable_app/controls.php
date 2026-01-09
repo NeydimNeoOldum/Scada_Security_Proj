@@ -1,12 +1,13 @@
 <?php
 session_start();
+require 'includes/tab_session.php'; // Multi-tab session support
 require 'includes/scada_db.php';
 require 'includes/functions.php';
 require 'includes/ldap_connect.php';
 require 'includes/check_role.php';
 
-if (!isset($_SESSION['user_dn'])) {
-    header("Location: index.php");
+if (!is_tab_logged_in()) {
+    header("Location: " . add_tab_id("index.php"));
     exit;
 }
 

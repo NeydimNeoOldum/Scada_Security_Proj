@@ -1,6 +1,10 @@
 <?php
 session_start();
-session_destroy();
+require 'includes/tab_session.php';
+
+// Only destroy this tab's session, not the entire session
+destroy_tab_session();
+
 header("Location: index.php");
 exit;
 ?>

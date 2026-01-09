@@ -1,10 +1,17 @@
 <?php
 // START SESSION
 session_start();
+require 'includes/tab_session.php'; // Multi-tab session support
 require 'includes/ldap_connect.php';
 require 'includes/functions.php';
 require 'includes/defense.php';
 $error = "";
+
+// Check if already logged in this tab
+if (is_tab_logged_in() && $_SERVER["REQUEST_METHOD"] != "POST") {
+    header("Location: " . add_tab_id("dashboard.php"));
+    exit;
+}
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -19,7 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($search === false) {
         $error = "Invalid search";
-        log_event("HIGH_LDAP_INJECTION", "Syntax Error in Search. Payload: '$user_input'. [ACTION: Investigate User Input] [REVERSAL: N/A]");
+        log_event("HIGH_LDAP_INJECTION", "Syntax Error in Search. Payload: '$user_input'. [ACTION: Investigate User Input] [REVERSAL: N/A]", $user_input);
     } else {
         $info = ldap_get_entries($ldap_conn, $search);
 
@@ -31,11 +38,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $bind = @ldap_bind($ldap_conn, $user_dn, $pass_input);
 
             if ($bind) {
-                $_SESSION['user_dn'] = $user_dn;
-                $_SESSION['user_name'] = $user_cn;
+                // Store user info in tab-specific session
+                set_tab_session('user_dn', $user_dn);
+                set_tab_session('user_name', $user_cn);
 
                 log_event("LOGIN_SUCCESS", "User logged in: " . $user_cn);
-                header("Location: dashboard.php");
+                header("Location: " . add_tab_id("dashboard.php"));
                 exit;
             } else {
                 $error = "Authentication Failed";
@@ -54,6 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <title>SCADA Access Control</title>
+    <script src="includes/tab_session.js"></script>
     <style>
         /* Modern Industrial Minimalist Theme */
         :root {

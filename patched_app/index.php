@@ -1,10 +1,17 @@
 <?php
 // START SESSION
 session_start();
+require 'includes/tab_session.php';
 require 'includes/ldap_connect.php';
 require 'includes/functions.php';
 
 $error = "";
+
+// Check if already logged in this tab
+if (is_tab_logged_in() && $_SERVER["REQUEST_METHOD"] != "POST") {
+    header("Location: " . add_tab_id("dashboard.php"));
+    exit;
+}
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -12,23 +19,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $pass_input = $_POST['password'];
     $ip_address = $_SERVER['REMOTE_ADDR'];
 
+    // Ensure $db is available (it is included via functions.php -> db_connect.php)
+    global $db;
+
+    // Check if rate limiting is enabled
+    $rate_limit_enabled = $db->query("SELECT value FROM security_settings WHERE key = 'rate_limit_enabled'")->fetchColumn();
+    if ($rate_limit_enabled === false) {
+        $rate_limit_enabled = '1'; // Default: enabled
+    }
+
     // --- FIX #1: RATE LIMITING (5 attempts per 10 mins) ---
     // We check the database for recent failures from this IP
     $limit = 5;
     $time_window = "-10 minutes";
-    
-    // Ensure $db is available (it is included via functions.php -> db_connect.php)
-    global $db; 
-    
+
     $stmt = $db->prepare("SELECT COUNT(*) FROM logs WHERE user_ip = :ip AND action = 'LOGIN_FAIL' AND timestamp > datetime('now', :window)");
     $stmt->execute([':ip' => $ip_address, ':window' => $time_window]);
     $failed_attempts = $stmt->fetchColumn();
 
-    if ($failed_attempts >= $limit) {
+    if ($rate_limit_enabled === '1' && $failed_attempts >= $limit) {
         $error = "Too many failed attempts. Please try again in 10 minutes.";
         // Log this specific blocking event so admins know an attack is happening
         log_event("SECURITY_ALERT", "Rate limit blocking IP: " . $ip_address);
-    } 
+    }
     else {
         // Only proceed if under the limit
         log_event("LOGIN_ATTEMPT", "Attempt for User: " . $user_input);
@@ -56,11 +69,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $bind = @ldap_bind($ldap_conn, $user_dn, $pass_input);
 
                 if ($bind) {
-                    $_SESSION['user_dn'] = $user_dn;
-                    $_SESSION['user_name'] = $user_cn;
+                    // Regenerate session ID to prevent session fixation
+                    session_regenerate_id(true);
+
+                    set_tab_session('user_dn', $user_dn);
+                    set_tab_session('user_name', $user_cn);
 
                     log_event("LOGIN_SUCCESS", "User logged in: " . $user_cn);
-                    header("Location: dashboard.php");
+                    header("Location: " . add_tab_id("dashboard.php"));
                     exit;
                 } else {
                     $error = "Authentication Failed";
@@ -80,6 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <title>SCADA Access Control</title>
+    <script src="includes/tab_session.js"></script>
     <style>
         /* Modern Industrial Minimalist Theme */
         :root {

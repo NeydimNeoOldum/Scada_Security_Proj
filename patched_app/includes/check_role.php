@@ -16,11 +16,13 @@ function get_user_role($user_dn) {
 }
 
 function is_admin() {
-    if (!isset($_SESSION['user_dn'])) return false;
+    // Check tab-specific user DN
+    $user_dn = get_tab_session('user_dn');
+    if (!$user_dn) return false;
 
     // Always check LDAP directly (don't cache in session)
-    $role = get_user_role($_SESSION['user_dn']);
-    $_SESSION['role'] = $role; // Update session for display purposes
+    $role = get_user_role($user_dn);
+    set_tab_session('role', $role); // Update session for display purposes
 
     return $role === 'admin';
 }
