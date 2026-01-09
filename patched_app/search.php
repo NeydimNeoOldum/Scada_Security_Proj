@@ -14,13 +14,27 @@ $debug_filter = "";
 
 if (isset($_GET['query'])) {
     $raw_input = $_GET['query'];
-    
+
     // ---------------------------------------------------------
-    // SECURITY PATCH: LDAP INJECTION PREVENTION
+    // DETECTION: Check for LDAP injection attempts (before prevention)
+    // ---------------------------------------------------------
+    if (preg_match('/[\(\)\*\|&\!]/', $raw_input)) {
+        // Log the LDAP injection attempt for monitoring
+        try {
+            @log_event("BLOCKED_LDAP_INJECTION",
+                      "LDAP Injection attempt blocked. Input: '$raw_input'. [ACTION: ldap_escape() prevented filter manipulation]",
+                      $raw_input);
+        } catch (Exception $e) {
+            // Silently fail
+        }
+    }
+
+    // ---------------------------------------------------------
+    // PREVENTION: LDAP INJECTION PREVENTION
     // ---------------------------------------------------------
     // OLD (VULNERABLE): $safe_input = str_replace("*", "", $raw_input);
-    
-    // NEW (SECURE): 
+
+    // NEW (SECURE):
     // ldap_escape() with LDAP_ESCAPE_FILTER handles all special chars: * ( ) \ NUL
     // This converts input like "admin)" into "admin\29", treating it as text, not code.
     $safe_input = ldap_escape($raw_input, "", LDAP_ESCAPE_FILTER);

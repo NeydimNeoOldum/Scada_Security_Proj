@@ -1,7 +1,6 @@
 <?php
 // includes/defense.php
 // This script checks if the current user is banned.
-// Include this at the VERY TOP of index.php and dashboard.php
 
 require_once 'db_connect.php';
 
