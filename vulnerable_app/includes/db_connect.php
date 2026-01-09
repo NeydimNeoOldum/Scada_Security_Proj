@@ -6,6 +6,8 @@ try {
     // Connect (creates file if missing)
     $db = new PDO("sqlite:$db_file");
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db->setAttribute(PDO::ATTR_TIMEOUT, 1); // 1 second timeout to prevent hanging
+    $db->exec("PRAGMA busy_timeout = 1000"); // 1 second busy timeout
 
     // Create Enhanced Logs Table with Attack Classification
     $query = "CREATE TABLE IF NOT EXISTS logs (

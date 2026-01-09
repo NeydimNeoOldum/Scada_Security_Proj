@@ -1,6 +1,5 @@
 <?php
 // functions.php - Handles Logging for the Monitoring System requirement
-require 'db_connect.php';
 
 function log_event($type, $details, $payload = '') {
     global $db;
@@ -33,14 +32,18 @@ function log_event($type, $details, $payload = '') {
         }
         elseif ($type === 'LOGIN_FAIL') {
             // Check for brute force patterns (multiple failures from same IP)
-            $stmt = $db->prepare("SELECT COUNT(*) FROM logs WHERE user_ip = :ip AND action = 'LOGIN_FAIL' AND timestamp > datetime('now', '-5 minutes')");
-            $stmt->execute([':ip' => $ip]);
-            $fail_count = $stmt->fetchColumn();
+            try {
+                $stmt = $db->prepare("SELECT COUNT(*) FROM logs WHERE user_ip = :ip AND action = 'LOGIN_FAIL' AND timestamp > datetime('now', '-5 minutes')");
+                $stmt->execute([':ip' => $ip]);
+                $fail_count = $stmt->fetchColumn();
 
-            if ($fail_count >= 3) {
-                $attack_type = 'BRUTE_FORCE';
-                $severity = 'HIGH';
-                $recommended_action = 'Temporary IP ban. Enable rate limiting. Notify user of suspicious activity.';
+                if ($fail_count >= 3) {
+                    $attack_type = 'BRUTE_FORCE';
+                    $severity = 'HIGH';
+                    $recommended_action = 'Temporary IP ban. Enable rate limiting. Notify user of suspicious activity.';
+                }
+            } catch (Exception $e) {
+                // Skip brute force detection if DB is busy
             }
         }
         elseif ($type === 'ACCESS_DENIED') {

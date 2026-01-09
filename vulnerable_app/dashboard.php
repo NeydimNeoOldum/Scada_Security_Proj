@@ -35,10 +35,15 @@ if (isset($_GET['log_id'])) {
     $input = $_GET['log_id'];
     $detected = false;
     foreach ($blacklist as $word) {
-        if (stripos($input, $word) !== false) {
+        if (strpos($input, $word) !== false) {
             $detected = true;
             $filter_error = "SECURITY ALERT: Malicious keyword '$word' detected!";
-            log_event("CRITICAL_SQL_INJECTION", "Blocked Keyword: '$word'. Input Payload: '$input'. [ACTION: Block IP via Firewall] [REVERSAL: Unblock in FW]", $input);
+            // Log in background to avoid blocking
+            try {
+                @log_event("CRITICAL_SQL_INJECTION", "Blocked Keyword: '$word'. Input Payload: '$input'. [ACTION: Block IP via Firewall] [REVERSAL: Unblock in FW]", $input);
+            } catch (Exception $e) {
+                // Silently fail - don't block the page
+            }
             break;
         }
     }
@@ -46,9 +51,30 @@ if (isset($_GET['log_id'])) {
     if (!$detected) {
         $query = "SELECT * FROM logs WHERE id = " . $input;
         try {
-            $result = $db->query($query);
-            if ($result) {
-                $log_results = $result->fetchAll(PDO::FETCH_ASSOC);
+            // VULNERABILITY: Split on semicolon and execute each statement separately
+            // This allows INSERT, UPDATE, DELETE attacks via multi-statement injection
+            $statements = explode(';', $query);
+            $lastResult = null;
+
+            foreach ($statements as $stmt) {
+                $stmt = trim($stmt);
+                if (empty($stmt) || $stmt === '--' || strpos($stmt, '--') === 0) {
+                    continue; // Skip empty statements and comments
+                }
+
+                // Execute each statement
+                if (stripos($stmt, 'select') === 0) {
+                    // For SELECT, save the result
+                    $lastResult = $db->query($stmt);
+                } else {
+                    // For INSERT, UPDATE, DELETE, DROP, etc - just execute
+                    $db->exec($stmt);
+                }
+            }
+
+            // Use the last SELECT result if available
+            if ($lastResult) {
+                $log_results = $lastResult->fetchAll(PDO::FETCH_ASSOC);
             }
         } catch (Exception $e) {
             $filter_error = "Query Error: " . $e->getMessage();

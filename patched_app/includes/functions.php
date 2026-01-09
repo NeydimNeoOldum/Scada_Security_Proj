@@ -8,7 +8,7 @@ function log_event($type, $details, $payload = '') {
     try {
         $ip = $_SERVER['REMOTE_ADDR'];
 
-        // AUTOMATED METADATA COLLECTION (Satisfies "Actionable Metadata")
+        // AUTOMATED METADATA COLLECTION 
         $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
         $uri = $_SERVER['REQUEST_URI'] ?? 'Unknown';
         $method = $_SERVER['REQUEST_METHOD'] ?? 'Unknown';
