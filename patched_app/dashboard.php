@@ -5,6 +5,7 @@ require 'includes/db_connect.php';
 require 'includes/scada_db.php';
 require 'includes/ldap_connect.php';
 require 'includes/check_role.php';
+require 'includes/functions.php';
 
 if (!is_tab_logged_in()) {
     header("Location: " . add_tab_id("index.php"));
@@ -19,10 +20,34 @@ $scada = get_scada();
 $log_results = [];
 $filter_error = "";
 
+// SQL Injection Detection Blacklist (for monitoring)
+$blacklist = [
+    "UNION", "SELECT", "INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE",
+    "TRUNCATE", "EXEC", "SHUTDOWN", "MERGE", "GRANT", "REVOKE", "COMMIT",
+    "ROLLBACK", "REPLACE", "HANDLER", "CALL", "DO", "PREPARE", "EXECUTE",
+    "DEALLOCATE", "DESCRIBE", "EXPLAIN", "USE", "LOCK", "UNLOCK", "RENAME",
+    "SET", "SHOW", "PRAGMA", "CAST", "CHAR", "VARCHAR", "NCHAR", "OR"
+];
+
 if (isset($_GET['log_id'])) {
     $input = $_GET['log_id'];
 
-    // UPGRADE 1: Strict Validation
+    // DETECTION: Check for SQL injection attempts (before prevention)
+    foreach ($blacklist as $word) {
+        if (stripos($input, $word) !== false) {
+            // Log the SQL injection attempt for monitoring
+            try {
+                @log_event("BLOCKED_SQL_INJECTION",
+                          "SQL Injection attempt blocked. Keyword: '$word'. Input: '$input'. [ACTION: Parameterized query prevented execution]",
+                          $input);
+            } catch (Exception $e) {
+                // Silently fail
+            }
+            break; // Only log once per attempt
+        }
+    }
+
+    // PREVENTION: Strict Validation
     if (filter_var($input, FILTER_VALIDATE_INT) === false) {
         $filter_error = "Invalid request. Log ID must be a number.";
     } else {
