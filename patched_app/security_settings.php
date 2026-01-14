@@ -18,32 +18,33 @@ if (!is_admin()) {
 
 // Create settings table if it doesn't exist
 $db->exec("CREATE TABLE IF NOT EXISTS security_settings (
-    key TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    setting_key TEXT UNIQUE NOT NULL,
     value TEXT,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 
 // Handle toggle requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_rate_limit'])) {
-    $current = $db->query("SELECT value FROM security_settings WHERE key = 'rate_limit_enabled'")->fetchColumn();
-    $new_value = ($current === '1') ? '0' : '1';
+    $current = $db->query("SELECT value FROM security_settings WHERE setting_key = 'rate_limiting'")->fetchColumn();
+    $new_value = ($current === 'ON') ? 'OFF' : 'ON';
 
-    $stmt = $db->prepare("INSERT OR REPLACE INTO security_settings (key, value, updated_at) VALUES ('rate_limit_enabled', ?, datetime('now'))");
+    $stmt = $db->prepare("INSERT OR REPLACE INTO security_settings (setting_key, value, updated_at) VALUES ('rate_limiting', ?, datetime('now'))");
     $stmt->execute([$new_value]);
 
     $admin_user = get_tab_user_name();
-    $action = $new_value === '1' ? 'enabled' : 'disabled';
+    $action = $new_value === 'ON' ? 'enabled' : 'disabled';
     log_event("SECURITY_CONFIG", "Admin $admin_user $action rate limiting");
 
     $success_msg = "Rate limiting has been " . $action;
 }
 
 // Get current settings
-$rate_limit_enabled = $db->query("SELECT value FROM security_settings WHERE key = 'rate_limit_enabled'")->fetchColumn();
+$rate_limit_enabled = $db->query("SELECT value FROM security_settings WHERE setting_key = 'rate_limiting'")->fetchColumn();
 if ($rate_limit_enabled === false) {
     // Default: enabled
-    $db->exec("INSERT INTO security_settings (key, value) VALUES ('rate_limit_enabled', '1')");
-    $rate_limit_enabled = '1';
+    $db->exec("INSERT INTO security_settings (setting_key, value) VALUES ('rate_limiting', 'ON')");
+    $rate_limit_enabled = 'ON';
 }
 
 // Get recent settings changes
@@ -230,15 +231,15 @@ $recent_changes = $db->query("SELECT * FROM logs WHERE action = 'SECURITY_CONFIG
         <div class="setting-info">
             <h3>
                 Rate Limiting on Login
-                <span class="status-badge <?php echo $rate_limit_enabled === '1' ? 'status-enabled' : 'status-disabled'; ?>">
-                    <?php echo $rate_limit_enabled === '1' ? 'ENABLED' : 'DISABLED'; ?>
+                <span class="status-badge <?php echo $rate_limit_enabled === 'ON' ? 'status-enabled' : 'status-disabled'; ?>">
+                    <?php echo $rate_limit_enabled === 'ON' ? 'ENABLED' : 'DISABLED'; ?>
                 </span>
             </h3>
             <p>
                 Limits failed login attempts to 5 per 10 minutes from a single IP address.
                 When enabled, prevents brute force attacks by blocking repeated login attempts.
             </p>
-            <?php if ($rate_limit_enabled === '0'): ?>
+            <?php if ($rate_limit_enabled === 'OFF'): ?>
                 <div class="warning-box">
                     <strong>⚠ WARNING:</strong> Rate limiting is currently disabled. Your system is vulnerable to brute force attacks.
                     This should only be disabled for testing purposes.
@@ -246,8 +247,8 @@ $recent_changes = $db->query("SELECT * FROM logs WHERE action = 'SECURITY_CONFIG
             <?php endif; ?>
         </div>
         <form method="POST">
-            <button type="submit" name="toggle_rate_limit" class="toggle-btn <?php echo $rate_limit_enabled === '1' ? 'enabled' : 'disabled'; ?>">
-                <?php echo $rate_limit_enabled === '1' ? 'DISABLE' : 'ENABLE'; ?>
+            <button type="submit" name="toggle_rate_limit" class="toggle-btn <?php echo $rate_limit_enabled === 'ON' ? 'enabled' : 'disabled'; ?>">
+                <?php echo $rate_limit_enabled === 'ON' ? 'DISABLE' : 'ENABLE'; ?>
             </button>
         </form>
     </div>
