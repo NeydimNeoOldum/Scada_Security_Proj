@@ -1,0 +1,56 @@
+version: '3'
+
+services:
+  # LDAPS Server (Secure LDAP with TLS/SSL)
+  openldap-secure:
+    image: osixia/openldap:1.5.0
+    container_name: scada_ldap_secure
+    environment:
+      LDAP_ORGANISATION: "ScadaWaterCorp"
+      LDAP_DOMAIN: "scada.local"
+      LDAP_ADMIN_PASSWORD: "admin"
+      LDAP_TLS: "true"
+      LDAP_TLS_VERIFY_CLIENT: "never"
+    ports:
+      - "1389:389"   # Plain LDAP on different port to avoid conflict
+      - "1636:636"   # LDAPS on different port
+    volumes:
+      - ldap_data_secure:/var/lib/ldap
+      - ldap_config_secure:/etc/ldap/slapd.d
+
+  # phpLDAPadmin for LDAPS
+  phpldapadmin-secure:
+    image: osixia/phpldapadmin:latest
+    container_name: scada_ldap_gui_secure
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "openldap-secure"
+      PHPLDAPADMIN_HTTPS: "false"
+    ports:
+      - "8081:80"    # Different port to avoid conflict with vulnerable version
+    depends_on:
+      - openldap-secure
+
+  # PHP Web Application (Patched SCADA with LDAPS)
+  web-patched:
+    image: php:8.1-apache
+    container_name: scada_web_patched
+    ports:
+      - "8082:80"    # Different port to avoid conflict
+    volumes:
+      - ./patched_app:/var/www/html
+    depends_on:
+      - openldap-secure
+    command: >
+      bash -c "apt-get update &&
+               apt-get install -y libldap2-dev libsqlite3-dev libssl-dev ca-certificates openssl &&
+               update-ca-certificates &&
+               docker-php-ext-install pdo pdo_sqlite &&
+               docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu &&
+               docker-php-ext-install ldap &&
+               mkdir -p /etc/ldap &&
+               echo 'TLS_REQCERT never' > /etc/ldap/ldap.conf &&
+               apache2-foreground"
+
+volumes:
+  ldap_data_secure:
+  ldap_config_secure:

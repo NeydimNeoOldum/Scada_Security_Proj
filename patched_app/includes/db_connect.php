@@ -53,6 +53,18 @@ try {
     )";
     $db->exec($action_history_query);
 
+    // Create Security Settings Table
+    $settings_query = "CREATE TABLE IF NOT EXISTS security_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        setting_key TEXT UNIQUE NOT NULL,
+        value TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )";
+    $db->exec($settings_query);
+
+    // Initialize default settings
+    $db->exec("INSERT OR IGNORE INTO security_settings (setting_key, value) VALUES ('rate_limiting', 'ON')");
+
 } catch(PDOException $e) {
     die("Database Connection Failed: " . $e->getMessage());
 }

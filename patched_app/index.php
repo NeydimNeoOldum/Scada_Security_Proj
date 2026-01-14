@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     global $db;
 
     // Check if rate limiting is enabled
-    $rate_limit_enabled = $db->query("SELECT value FROM security_settings WHERE key = 'rate_limit_enabled'")->fetchColumn();
+    $rate_limit_enabled = $db->query("SELECT value FROM security_settings WHERE setting_key = 'rate_limiting'")->fetchColumn();
     if ($rate_limit_enabled === false) {
         $rate_limit_enabled = '1'; // Default: enabled
     }
